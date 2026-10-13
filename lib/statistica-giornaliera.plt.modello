@@ -1,0 +1,81 @@
+#.--------------------------------------------------------------------.
+#|                                                                    |
+#|                                                                    |
+#|                                                                    |
+#|                                                                    |
+#|                                                                    |
+#|                                                                    |
+#|                                                                    |
+#|                                                                    |
+#|                                                                    |
+#|                                                                    |
+#|                                                                    |
+#|                                                                    |
+#'--------------------------------------------------------------------'
+
+set datafile separator "|"
+#set decimalsign locale
+set decimalsign ','
+
+#.------------------------------------------------------------.
+#| Informazione Server/Data                                   |
+#'------------------------------------------------------------'
+hostname = system("awk -F'|' 'NR==2 {print $2}' ###FONTE###")
+date = system("awk -F'|' 'NR==2 {print substr($1,7,2) \"/\" substr($1,5,2) \"/\" substr($1,1,4)}' ###FONTE###")
+
+set title sprintf("Monitoraggio Giornalierio [Server : %s | Data: %s]", hostname, date) font "Arial,18:bold"
+
+set terminal svg size 1200,700
+set output "###IMMAGINE###"
+
+
+#.------------------------------------------------------------.
+#| Assi                                                       |
+#'------------------------------------------------------------'
+set xrange [0:23]
+
+# Etichette asse X: solo ore
+set xtics 0,1,23
+set xtics rotate by 45 right
+set format x "%02.0f"
+
+# Scala sinistra: CPU / RAM
+set yrange [0:100]
+set ylabel "CPU / RAM (%)"
+
+# Scala destra: Swap / Filesystem
+set y2range [0:100]
+set y2label "Swap / Filesystem (%)"
+
+set y2tics
+
+set grid xtics ytics
+
+set xlabel "Ora"
+
+#.------------------------------------------------------------.
+#| Legenda                                                    |
+#'------------------------------------------------------------'
+set tmargin 4
+
+#.------------------------------------------------------------.
+#| Grafico                                                    |
+#'------------------------------------------------------------'
+plot \
+    "###FONTE###" using 0:3 \
+        with linespoints lw 2 pt 7 ps 0.5 lc rgb "#e41a1c" \
+        title "CPU - picco orario", \
+    "###FONTE###" using 0:8 \
+        with linespoints lw 2 pt 7 ps 0.5 lc rgb "#377eb8" \
+        title "RAM - picco orario", \
+    "###FONTE###" using 0:10 axes x1y2 \
+        with linespoints lw 2 pt 7 ps 0.5 lc rgb "#4daf4a" \
+        title "Swap - picco orario", \
+    "###FONTE###" using 0:12 axes x1y2 \
+        with linespoints lw 2 pt 7 ps 0.5 lc rgb "#ff7f00" \
+        title "Filesystem - picco orario"
+
+#
+# :::... EOF
+#
+

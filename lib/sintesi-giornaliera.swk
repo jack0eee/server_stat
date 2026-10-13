@@ -1,0 +1,90 @@
+#!/usr/bin/awk -f
+
+BEGIN {
+    FS = "|"
+    OFS = "|"
+}
+
+# Header
+/^#/ {
+    print
+    next
+}
+
+{
+    # Estraiamo giorno e ora dal timestamp
+    date = substr($1, 1, 8)
+    hour = substr($1, 10, 2)
+
+    current_hour = date " " hour
+
+    # Primo record oppure cambio ora
+    if (current_hour != previous_hour) {
+
+        # Emettiamo il record dell'ora precedente
+        if (previous_hour != "") {
+            print_record()
+        }
+
+        # Inizializziamo il nuovo gruppo
+        hour_timestamp = date " " hour "0000"
+        hostname = $2
+
+        cpu_max = $3
+        cpu_steal_max = $4
+        load1_max = $5
+        load5_max = $6
+        load15_max = $7
+
+        ram_max = $8
+        ram_available_min = $9
+
+        swap_max = $10
+        swap_available_min = $11
+
+        fs_max = $12
+        fs_available_min = $13
+
+        logs_size_max = $14
+        logs_count_max = $15
+
+        previous_hour = current_hour
+        next
+    }
+
+    # Aggiornamento dei massimi/minimi
+    if ($3 > cpu_max) cpu_max = $3
+    if ($4 > cpu_steal_max) cpu_steal_max = $4
+    if ($5 > load1_max) load1_max = $5
+    if ($6 > load5_max) load5_max = $6
+    if ($7 > load15_max) load15_max = $7
+
+    if ($8 > ram_max) ram_max = $8
+    if ($9 < ram_available_min) ram_available_min = $9
+
+    if ($10 > swap_max) swap_max = $10
+    if ($11 < swap_available_min) swap_available_min = $11
+
+    if ($12 > fs_max) fs_max = $12
+    if ($13 < fs_available_min) fs_available_min = $13
+
+    if ($14 > logs_size_max) logs_size_max = $14
+    if ($15 > logs_count_max) logs_count_max = $15
+}
+
+END {
+    if (previous_hour != "") {
+        print_record()
+    }
+}
+
+function print_record() {
+    print hour_timestamp, hostname, \
+          cpu_max, cpu_steal_max, \
+          load1_max, load5_max, load15_max, \
+          ram_max, ram_available_min, \
+          swap_max, swap_available_min, \
+          fs_max, fs_available_min, \
+          logs_size_max, logs_count_max
+}
+
